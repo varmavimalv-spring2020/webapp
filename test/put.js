@@ -4,10 +4,10 @@ const app = require('../app');
 const expect = chai.expect
 
 //Update without request body
- describe('PUT /users', () => {
+ describe('PUT /users/self', () => {
     it('No Content Added to Update', function(done) {
         supertest(app)
-        .put('/users')
+        .put('/users/self')
         .auth('jane.doe@example.com', 'Welcome@123')
         .send({
 
@@ -17,10 +17,10 @@ const expect = chai.expect
   });
 
 //Update with email update
-  describe('PUT /users', () => {
+  describe('PUT /users/self', () => {
     it('Cannot Update Email', function(done) {
         supertest(app)
-        .put('/users')
+        .put('/users/self')
         .auth('jane.doe@example.com', 'Welcome@123')
         .send({
             "first_name": "Jane",
@@ -33,10 +33,10 @@ const expect = chai.expect
   });
 
   //Correct Update
-  describe('PUT /users', () => {
+  describe('PUT /users/self', () => {
     it('Cannot Update Email', function(done) {
         supertest(app)
-        .put('/users')
+        .put('/users/self')
         .auth('jane.doe@example.com', 'Welcome@123')
         .send({
             "first_name": "Jane",
