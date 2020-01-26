@@ -9,4 +9,10 @@ jobs:
       - run:
           name: update-npm
           command:
-            echo "Hello World"
+             echo "Hello World"
+
+workflows:
+  version: 2
+  pr-check-workflow:
+    jobs:
+    - pr_check
