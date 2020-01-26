@@ -1,0 +1,18 @@
+---
+version: 2
+jobs:
+  pr_check:
+    docker:
+      - image: circleci/node:10.18.1
+    steps:
+      - checkout
+      - run:
+          name: update-npm
+          command:
+            echo "Hello World"
+
+workflows:
+  version: 2
+  pr-check-workflow:
+    jobs:
+    - pr_check
