@@ -1,9 +1,9 @@
 version: 2
 jobs:
-  build_and_test:
+  build:
     docker:
       - image: circleci/node:10.16.3
-      - image: circleci/mysql:latest
+      - image: circleci/mysql:8.0.4
         environment:
           MYSQL_ROOT_PASSWORD: Welcome@123
           MYSQL_DATABASE: Users
@@ -47,11 +47,11 @@ workflows:
 
   pr-check:
     jobs:
-      - build_and_test
+      - build
 
   build_deploy:
     jobs:
-      - build_and_test:
+      - build:
           filters:
             branches:
               only:
