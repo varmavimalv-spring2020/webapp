@@ -25,7 +25,7 @@ jobs:
           name: Install MySQL CLI; Import dummy data; run an example query
           command: |
             sudo apt-get install default-mysql-client
-            mysql -h 127.0.0.1 -u user -p passw0rd test_db < sql-data/create.sql
+            mysql -h 127.0.0.1 -u user -p passw0rd Users < sql-data/create.sql
       - run:
           name: update-npm
           command: 'sudo npm install -g npm@latest'
