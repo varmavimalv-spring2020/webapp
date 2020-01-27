@@ -2,20 +2,52 @@ version: 2
 jobs:
   build_and_test:
     docker:
-      - image: circleci/node:10.18.1
+      - image: circleci/node:10.16.3
+      - image: circleci/mysql:latest
+        environment:
+          MYSQL_ROOT_PASSWORD: Welcome@123
+          MYSQL_DATABASE: Users
+          MYSQL_USER: user
+          MYSQL_PASSWORD: passw0rd
     steps:
       - checkout
+      - run: # https://circleci.com/docs/2.0/postgres-config/#example-mysql-project
+          name: Waiting for MySQL to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
+      - run:
+          name: Install MySQL CLI; Import dummy data; run an example query
+          command: |
+            sudo apt-get install default-mysql-client
+            mysql -h 127.0.0.1 -u user -p passw0rd test_db < sql-data/create.sql
       - run:
           name: update-npm
-          command:
-             echo "Hello World"
+          command: 'sudo npm install -g npm@latest'
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: install-npm-modules
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
+      - run:
+          name: test
+          command: npm test
 
 workflows:
   version: 2
 
   pr-check:
     jobs:
-    - build_and_test
+      - build_and_test
 
   build_deploy:
     jobs:
