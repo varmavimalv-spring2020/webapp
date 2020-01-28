@@ -34,7 +34,7 @@ const expect = chai.expect
 
   //Correct Update
   describe('PUT /users/self', () => {
-    it('Cannot Update Email', function(done) {
+    it('Updated Successfully', function(done) {
         supertest(app)
         .put('/users/self')
         .auth('jane.doe@example.com', 'Welcome@123')
