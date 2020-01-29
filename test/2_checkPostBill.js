@@ -91,7 +91,7 @@ describe('POST /bill', () => {
 
 //Check for correct bill creation
 describe('POST /bill', () => {
-    it('Okay, Error For Duplicate Email Works', (done) => {
+    it('Okay, Create bill', (done) => {
         supertest(app)
         .post('/bill')
         .auth('jane.doe@example.com', 'ChangePass@123')
@@ -107,6 +107,6 @@ describe('POST /bill', () => {
             ],
             "paymentStatus": "paid"
         })
-        .expect(400,done)
+        .expect(201,done)
     })
 })
