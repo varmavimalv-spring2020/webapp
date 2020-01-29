@@ -9,7 +9,10 @@ const userBill = require('../controller/bill')
 //POST API to create a bill from controller/bill.js
 router.post('/', userBill.users_create_bill); 
 
-//GET API to get a bill from controller/bill.js
+//GET API to get all bills from controller/bill.js
 router.get('/', userBill.users_get_bills); 
+
+//GET API to get a bill based on ID from controller/bill.js
+router.get('/:id', userBill.users_get_bills_id); 
 
 module.exports = router;  
