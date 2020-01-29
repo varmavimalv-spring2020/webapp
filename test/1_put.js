@@ -12,7 +12,7 @@ const expect = chai.expect
         .send({
 
         })
-        .expect(204,done)
+        .expect(400,done)
     })
   });
 

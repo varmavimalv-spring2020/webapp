@@ -76,30 +76,33 @@ exports.users_create = (req, res) => {
         first_name : joi.string().min(2).max(50).required(),
         last_name : joi.string().min(2).max(50).required(),
     });
-
-    const convertPasswordToString = JSON.stringify(data.password)
-    if(convertPasswordToString.length<8){
-        res.status(400).send({
-            "status":"400",
-            "message":"Password must be greater than 8 characters"
-        })
-    }
-    else if(!data.first_name || !data.last_name){
-        res.status(400).send({
-            "message":"Please enter first and last names"
-        })
-    }
-    else if(data.account_created || data.account_updated || data.id){
-        res.status(401).send({
-            "message":"User cannot id, update account_created and account_updated"
-        })
-    }
-    else if(!data){
+    if(Object.keys(data).length == 0){
         res.status(400).send({
             "status":"400",
             "message":"Please enter valid data for the user"
         })
     }
+
+    else if(!data.first_name || !data.last_name ||!data.password ||!data.email_address){
+        res.status(400).send({
+            "message":"Please enter first and last names, password and email address"
+        })
+    }
+
+    else if(data.password && (JSON.stringify(data.password).length<8)){
+        //const convertPasswordToString = JSON.stringify(data.password)
+            res.status(400).send({
+                "status":"400",
+                "message":"Password must be greater than 8 characters"
+            })
+    }
+
+    else if(data.account_created || data.account_updated || data.id){
+        res.status(401).send({
+            "message":"User cannot id, update account_created and account_updated"
+        })
+    }
+
     else{
         connection.query('SELECT COUNT(*) AS count FROM UsersData where email_address = "'+emailAddress+'"', (err, value) => {
             if(err){
@@ -157,9 +160,10 @@ exports.users_update = (req, res) => {
             "message" : "Please provide email and password"
         })
     }
-    else if(!data){
-        res.status(204).send({
-            "message" : "Please enter user details"
+    if(Object.keys(data).length == 0){
+        res.status(400).send({
+            "status":"400",
+            "message":"Please enter valid data for the user"
         })
     }
     else if(!data.first_name || !data.last_name || !data.password || !data.email_address){
@@ -177,11 +181,12 @@ exports.users_update = (req, res) => {
             "message":"User cannot update id, account_created and account_updated"
         })
     }
-    else if(convertPasswordToString.length<8){
-        res.status(400).send({
-            "status":"400",
-            "message":"Password must be greater than 8 characters"
-        })
+    else if(data.password && (JSON.stringify(data.password).length<8)){
+        //const convertPasswordToString = JSON.stringify(data.password)
+            res.status(400).send({
+                "status":"400",
+                "message":"Password must be greater than 8 characters"
+            })
     }
     else{
         connection.query('SELECT * FROM UsersData where email_address = "'+authenticateUser.name+'"', (err, value) => {
