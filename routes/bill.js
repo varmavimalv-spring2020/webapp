@@ -18,4 +18,7 @@ router.get('/:id', userBill.users_get_bills_id);
 //PUT API to update a bill based on ID from controller/bill.js
 router.put('/:id', userBill.users_update_bills_id);
 
+//DELETE API to delete a bill based on ID from controller/bill.js
+router.delete('/:id', userBill.delete_bill_id);
+
 module.exports = router;  

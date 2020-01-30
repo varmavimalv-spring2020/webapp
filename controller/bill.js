@@ -263,4 +263,62 @@ exports.users_update_bills_id = (req, res) => {
         })
     }
 }
-                        
+                    
+
+exports.delete_bill_id = (req, res) => {
+    const authenticateUser = basicAuthentication(req)
+    const deleteSingleId = req.params.id
+
+    //check if the user has provided both email and password
+    if(!authenticateUser.name || !authenticateUser.pass){
+        return res.status(400).send({
+            "message" : "Please provide email and password"
+        })
+    }
+
+    //if both credentials given, check if the email exists in database, if it exists, check if the passwords match
+    else{
+        connection.query('SELECT * FROM UsersData where email_address = "'+authenticateUser.name+'"', (err, value) => {
+            if(err){
+                res.status(400).send(err)
+            }
+            else if(value.length == 0){
+                res.status(400).send({
+                    "message" : "No such email-id exists"
+                })
+            }
+            else{
+                if(bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) {
+                    if(match){
+                        connection.query('SELECT Bill.id FROM Bill INNER JOIN UsersData on Bill.owner_id = "'+value[0].id+'" AND Bill.id = "'+deleteSingleId+'"', (err, result) => {
+                            if(err){
+                                res.status(400).send(err)
+                            }
+                            else if(result.length == 0){
+                                res.status(404).send({
+                                    "message" : "No bills available for the requested ID"
+                                })
+                            }
+                            else{
+                                const sql = 'DELETE FROM Bill WHERE id = "'+deleteSingleId+'"'
+                                connection.query(sql, (err, result) => {
+                                    if(err){
+                                        return res.status(400).send(err)
+                                    }
+                                    return res.status(204).send({
+                                        "message" : "Deleted Successfully"
+                                    })
+                                })
+                            }
+                        })
+                    }
+                    else{
+                        res.status(404).send({
+                            "message" : "Please enter valid and correct credentials."
+                        })
+                    }
+                }));
+            }
+        })
+    }
+}
