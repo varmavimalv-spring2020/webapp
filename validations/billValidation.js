@@ -25,6 +25,12 @@ function validate(req) {
         return res
     }
 
+    else if(data.id || data.created_ts || data.updated_ts || data.owner_id){
+        res.status = 400
+        res.message = "User cannot enter id, created_ts, updated_ts or owner_id"
+        return res
+    }
+
     const uniqueCategories = new Set(data.categories)
     if(data.categories && ((Object.keys(data.categories).length) != uniqueCategories.size)){
         res.status = 400
