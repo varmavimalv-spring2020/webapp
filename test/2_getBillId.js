@@ -9,6 +9,6 @@ describe('GET /bill/:id', () => {
         supertest(app)
         .get('/bill/:id')
         .auth('jane.doe@example.com', 'Welme@123')
-        .expect(400,done)
+        .expect(404,done)
     })
 })
