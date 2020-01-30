@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS `UsersData`;
 DROP TABLE IF EXISTS `Bill`;
+DROP TABLE IF EXISTS `UsersData`;
 
 CREATE TABLE `UsersData` (
   `id` varchar(100) NOT NULL,
