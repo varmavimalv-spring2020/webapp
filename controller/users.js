@@ -10,9 +10,6 @@ exports.users_get_user_self = (req, res) => {
     const authenticateUser = basicAuthentication(req)
 
     //basic auth provides default naming convention as name and pass for email and password
-    console.log(authenticateUser.name)
-    console.log(authenticateUser.pass)
-
     //check if the user has provided both email and password
     if(!authenticateUser.name || !authenticateUser.pass){
         return res.status(400).send({
@@ -33,7 +30,6 @@ exports.users_get_user_self = (req, res) => {
             }
             else{
                 if(bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) {
-                    console.log(match)
                     if(match){
                         connection.query('SELECT id, first_name, last_name, email_address, account_created, account_updated FROM UsersData where email_address = ?', authenticateUser.name, (err, result) => {
                             if(err){
@@ -65,9 +61,6 @@ exports.users_create = (req, res) => {
     //The text file is provided by NIST at https://cry.github.io/nbp/
     //NIST Bad Passwords (NBP) comes with password lists sourced from SecLists by Daniel Miessler.
     const invalid_passwords = fs.readFileSync('invalid_passwords.txt').toString().split("\n")
-    const emailRegex = '[^@]+@[^@]+\.[a-zA-Z]{2,6}'
-    const passwordRegex = '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
-
     const data = req.body
     const emailAddress = data.email_address
     const schema = joi.object().keys({

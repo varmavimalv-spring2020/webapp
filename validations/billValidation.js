@@ -1,4 +1,3 @@
-//const joi = require('joi')
 const BaseJoi = require('joi');
 const Extension = require('joi-date-extensions');
 const joi = BaseJoi.extend(Extension);
@@ -19,7 +18,21 @@ function validate(req) {
         return res
     }
 
-    else if(!data.vendor ||!data.categories ||!data.bill_date || !data.due_date || !data.amount_due || !data.paymentStatus){
+    joi.validate(data.amount_due, validate_amount_due, (err, value) => {
+        if(err){
+            res.status = 400
+            res.message = "Please enter a valid number. The minimum amount due is 0.01"
+            return res
+        }
+        else{
+            res.status = 200
+        }
+    });
+    if(res.status == 400){
+        return res
+    }
+
+    if(!data.vendor ||!data.categories ||!data.bill_date || !data.due_date || !data.amount_due || !data.paymentStatus){
         res.status = 400
         res.message = "Please enter all the billing details : vendor, bill date, due date, amount due, categories, payment status"
         return res
@@ -35,12 +48,6 @@ function validate(req) {
     if(data.categories && ((Object.keys(data.categories).length) != uniqueCategories.size)){
         res.status = 400
         res.message = "Please enter unique values for categories"
-        return res
-    }
-
-    else if(!data.vendor || !data.bill_date || !data.due_date || !data.amount_due || !data.paymentStatus){
-        res.status = 400
-        res.message = "Please enter all the billing details : vendor, bill date, due date, amount due, payment status"
         return res
     }
 
@@ -80,20 +87,7 @@ function validate(req) {
     if(res.status == 400){
         return res
     }
-    joi.validate(data.amount_due, validate_amount_due, (err, value) => {
-        if(err){
-            res.status = 400
-            res.message = "Please enter a valid number. The minimum amount due is 0.01"
-            return res
-        }
-        else{
-            res.status = 200
-        }
-    });
-    if(res.status == 400){
-        return res
-    }
-    console.log(res)
+
     return res
 }
 
