@@ -103,11 +103,19 @@ Check if circleCI is running a job for master branch after merging.
 ## References -
 
 https://spring2020.csye6225.cloud/cna/
+
 https://www.npmjs.com/package/bcrypt
+
 https://www.npmjs.com/package/joi
+
 https://www.npmjs.com/package/express-basic-auth
+
 https://www.npmjs.com/package/uuid
+
 https://circleci.com/docs/
+
 https://circleci.com/docs/2.0/postgres-config/
+
 https://circleci.com/docs/2.0/language-javascript/
+
 https://cry.github.io/nbp/
