@@ -18,7 +18,8 @@ describe('POST /bill', () => {
               "tuition",
               "spring2020"
             ],
-            "paymentStatus": "paid"
+            "paymentStatus": "paid",
+            "attachment" : {}
         })
         .expect(401,done)
     })
@@ -61,7 +62,8 @@ describe('POST /bill', () => {
                 "college",
                 "spring2020"
             ],
-            "paymentStatus": "paid"
+            "paymentStatus": "paid",
+            "attachment" : {}
         })
         .expect(400, done)
     })
@@ -83,7 +85,8 @@ describe('POST /bill', () => {
                 "college",
                 "spring2020"
             ],
-            "paymentStatus": "paid"
+            "paymentStatus": "paid",
+            "attachment" : {}
         })
         .expect(400,done)
     })
@@ -105,7 +108,8 @@ describe('POST /bill', () => {
               "tuition",
               "spring2020"
             ],
-            "paymentStatus": "paid"
+            "paymentStatus": "paid",
+            "attachment" : {}
         })
         .expect(201,done)
     })
