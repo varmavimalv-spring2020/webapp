@@ -50,10 +50,11 @@ exports.users_create_bill = (req, res) => {
                             data.created_ts = new Date();
                             data.updated_ts = new Date();
                             data.owner_id = value[0].id;
+                            data.attachment = new Object()
                             categories = data.categories.join('|')
-                            const sql = "INSERT INTO Bill (id, created_ts, updated_ts, owner_id, vendor, bill_date, due_date, amount_due, categories, paymentStatus) VALUES (?,?,?,?,?,?,?,?,?,?)";
+                            const sql = "INSERT INTO Bill (id, created_ts, updated_ts, owner_id, vendor, bill_date, due_date, amount_due, categories, paymentStatus, attachment) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
                             const query = connection.query(sql, [data.id, data.created_ts, data.updated_ts,
-                                data.owner_id, data.vendor, data.bill_date, data.due_date, data.amount_due, categories, data.paymentStatus],(err, results) => {
+                                data.owner_id, data.vendor, data.bill_date, data.due_date, data.amount_due, categories, data.paymentStatus, JSON.stringify(data.attachment)],(err, results) => {
                                 if(err) {
                                     return res.status(400).send(err)
                                 }
@@ -116,6 +117,7 @@ exports.users_get_bills =  (req, res) => {
                                 else{
                                 for (i = 0; i < result.length; i++) {
                                     result[i].categories = result[i].categories.split('|')
+                                    result[i].attachment = JSON.parse(result[i].attachment)
                                     }
                                 return res.send(result)
                                 }
@@ -176,6 +178,7 @@ exports.users_get_bills_id = (req, res) => {
                             }
                             else{
                                 result[0].categories = result[0].categories.split('|')
+                                result[0].attachment = JSON.parse(result[0].attachment)
                                 return res.send(result[0])
                             }
                         })
