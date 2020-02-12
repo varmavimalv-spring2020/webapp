@@ -8,9 +8,16 @@ const saltRounds = 10
 
 exports.users_get_user_self = (req, res) => {
     const authenticateUser = basicAuthentication(req)
+    const basicAuthCheck = req.headers.authorization
 
     //basic auth provides default naming convention as name and pass for email and password
     //check if the user has provided both email and password
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
+
     if(!authenticateUser.name || !authenticateUser.pass){
         return res.status(400).send({
             "message" : "Please provide email and password"
@@ -147,6 +154,13 @@ exports.users_update = (req, res) => {
     const schemaPassword = joi.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/).invalid(invalid_passwords)
     const convertPasswordToString = JSON.stringify(data.password)
     const authenticateUser = basicAuthentication(req)
+    const basicAuthCheck = req.headers.authorization
+
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
 
     if(!authenticateUser.name || !authenticateUser.pass){
         return res.status(400).send({
