@@ -9,7 +9,13 @@ exports.bill_create_file = (req, res) => {
 
     const authenticateUser = basicAuthentication(req)
 
-    if(Object.keys(req.files).length > 1){
+    if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).send({
+            "message" : "Please attach a file"
+        })
+    }
+
+    else if(Object.keys(req.files).length > 1){
         return res.status(400).send({
             "message" : "You may attach only one file at a time"
         })
@@ -168,6 +174,91 @@ exports.bill_get_file = (req, res) => {
                     })
                 }
             });
+        }
+    })
+}
+
+exports.bill_delete_file = (req, res) => {
+    const authenticateUser = basicAuthentication(req)
+    const fileID = req.params.fileid
+    const billID = req.params.id
+    const basicAuthCheck = req.headers.authorization
+
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
+
+    //check if the user has provided both email and password
+    if(!authenticateUser.name || !authenticateUser.pass){
+        return res.status(400).send({
+            "message" : "Please provide email and password"
+        })
+    }
+    connection.query('SELECT * FROM UsersData where email_address = "'+authenticateUser.name+'"', (err, value) => {
+        if(err){
+            res.status(400).send(err)
+        }
+        else if(value.length == 0){
+            res.status(400).send({
+                "message" : "No such email-id exists"
+            })
+        }
+        else {
+            bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) { 
+                if(match){
+                    connection.query('SELECT Bill.id FROM Bill INNER JOIN UsersData on Bill.owner_id = "'+value[0].id+'" AND Bill.id = "'+billID+'"', (err, result) => {
+                        var flag = false;
+                        if(err){
+                            return res.status(400).send(err)
+                        }
+                        else if(result.length == 0){
+                            return res.status(404).send({
+                                "message" : "No bills available for the requested ID"
+                            })
+                        }
+                        connection.query('SELECT file_name, id, url, upload_date FROM File WHERE id = "'+fileID+'" AND bill_id = "'+billID+'"', (err, result) => {
+                            if(err){
+                                return res.status(400).send(err)
+                            }
+                            else if(result.length == 0){
+                                return res.status(404).send({
+                                    "message" : "No Files available for the requested ID"
+                                })
+                            } 
+                            else{
+                                connection.query('DELETE FROM File WHERE id = "'+fileID+'"',(err) => {
+                                    if(err){
+                                        flag = true;
+                                        return res.status(400).send(err)
+                                    }
+                                }) 
+                                const pathname = '/tmp/webapp/'
+                                const regex = RegExp(billID+"*", "g")
+                                fs.readdirSync(pathname)
+                                .filter(f => regex.test(f))
+                                .map(f => fs.unlinkSync(pathname + f))
+                
+                            if(flag){
+                                return;
+                            }
+                            connection.query('UPDATE Bill SET attachment = "'+JSON.stringify(new Object)+'" WHERE id = "'+billID+'"', (err, result) => {
+                                return res.status(204).send({
+                                    "message" : "Deleted Successfully"
+                                })
+                            })
+                        }
+                        })
+                                                                           
+                    })
+                }
+                else{
+                    res.status(404).send({
+                        "message" : "Please enter valid and correct credentials."
+                    })
+                }
+            })
         }
     })
 }
