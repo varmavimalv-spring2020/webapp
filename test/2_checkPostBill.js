@@ -109,7 +109,7 @@ describe('POST /bill', () => {
               "spring2020"
             ],
             "paymentStatus": "paid",
-            "attachment" : {}
+            "attachment" : JSON.stringify(new Object())
         })
         .expect(201,done)
     })
