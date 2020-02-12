@@ -14,4 +14,7 @@ router.post('/:id/file', billFile.bill_create_file);
 //GET API to get a file from controller/files.js
 router.get('/:id/file/:fileid', billFile.bill_get_file); 
 
+//DELETE API to delete a file from controller/files.js
+router.delete('/:id/file/:fileid', billFile.bill_delete_file); 
+
 module.exports = router;  

@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 const validate = require('../validations/billValidation')
 const uuidv4 = require('uuid/v4')
 const basicAuthentication = require('basic-auth')
+const fs = require('fs');
 
 exports.users_create_bill = (req, res) => {
 
@@ -249,6 +250,7 @@ exports.users_update_bills_id = (req, res) => {
                                     data.created_ts = result[0].created_ts
                                     data.owner_id = result[0].owner_id
                                     data.id = result[0].id
+                                    data.attachment = JSON.parse(result[0].attachment)
                                     categories = data.categories.join('|')
                                     const sql = 'UPDATE Bill SET vendor = ?, bill_date = ?, due_date = ?, amount_due = ?, categories = ?, updated_ts = ?, paymentStatus = ? WHERE id = "'+putSingleID+'"'
                                     connection.query(sql, [data.vendor, data.bill_date, data.due_date, data.amount_due, categories, data.updated_ts, data.paymentStatus], (err,results) => {
@@ -305,7 +307,9 @@ exports.delete_bill_id = (req, res) => {
             else{
                 if(bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) {
                     if(match){
-                        connection.query('SELECT Bill.id FROM Bill INNER JOIN UsersData on Bill.owner_id = "'+value[0].id+'" AND Bill.id = "'+deleteSingleId+'"', (err, result) => {
+                        connection.query('SELECT Bill.id, Bill.attachment FROM Bill INNER JOIN UsersData on Bill.owner_id = "'+value[0].id+'" AND Bill.id = "'+deleteSingleId+'"', (err, result) => {
+                            var flag = false;
+                            billAttachment = (result[0].attachment).length
                             if(err){
                                 res.status(400).send(err)
                             }
@@ -313,6 +317,28 @@ exports.delete_bill_id = (req, res) => {
                                 res.status(404).send({
                                     "message" : "No bills available for the requested ID"
                                 })
+                            }
+                            else if(billAttachment !== 0){
+                                connection.query('DELETE FROM File WHERE bill_id = "'+deleteSingleId+'"',(err) => {
+                                    if(err){
+                                        flag = true;
+                                        return res.status(400).send(err)
+                                    }
+                                }) 
+                                const pathname = '/tmp/webapp/'
+                                const regex = RegExp(deleteSingleId+"*", "g")
+                                fs.readdirSync(pathname)
+                                .filter(f => regex.test(f))
+                                .map(f => fs.unlinkSync(pathname + f))
+                
+                            if(flag){
+                                return;
+                            }
+                            connection.query('DELETE FROM Bill WHERE id = "'+deleteSingleId+'"', (err, result) => {
+                                return res.status(204).send({
+                                    "message" : "Deleted Successfully"
+                                })
+                            })
                             }
                             else{
                                 const sql = 'DELETE FROM Bill WHERE id = "'+deleteSingleId+'"'
