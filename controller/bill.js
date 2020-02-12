@@ -8,9 +8,16 @@ exports.users_create_bill = (req, res) => {
 
     const data = req.body
     const authenticateUser = basicAuthentication(req)
+    const basicAuthCheck = req.headers.authorization
 
     //basic auth provides default naming convention as name and pass for email and password
     //check if the user has provided both email and password
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
+
     if(!authenticateUser.name || !authenticateUser.pass){
         return res.status(400).send({
             "message" : "Please provide email and password"
@@ -67,6 +74,13 @@ exports.users_create_bill = (req, res) => {
 
 exports.users_get_bills =  (req, res) => {
     const authenticateUser = basicAuthentication(req)
+    const basicAuthCheck = req.headers.authorization
+
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
 
     //check if the user has provided both email and password
     if(!authenticateUser.name || !authenticateUser.pass){
@@ -122,6 +136,13 @@ exports.users_get_bills =  (req, res) => {
 exports.users_get_bills_id = (req, res) => {
     const authenticateUser = basicAuthentication(req)
     const getSingleId = req.params.id
+    const basicAuthCheck = req.headers.authorization
+
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
 
     //check if the user has provided both email and password
     if(!authenticateUser.name || !authenticateUser.pass){
@@ -174,6 +195,13 @@ exports.users_update_bills_id = (req, res) => {
     const data = req.body
     const authenticateUser = basicAuthentication(req)
     const putSingleID = req.params.id
+    const basicAuthCheck = req.headers.authorization
+
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
 
     //check if the user has provided both email and password
     if(!authenticateUser.name || !authenticateUser.pass){
@@ -245,6 +273,13 @@ exports.users_update_bills_id = (req, res) => {
 exports.delete_bill_id = (req, res) => {
     const authenticateUser = basicAuthentication(req)
     const deleteSingleId = req.params.id
+    const basicAuthCheck = req.headers.authorization
+
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
 
     //check if the user has provided both email and password
     if(!authenticateUser.name || !authenticateUser.pass){
