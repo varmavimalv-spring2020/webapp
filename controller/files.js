@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 const uuidv4 = require('uuid/v4')
 const basicAuthentication = require('basic-auth')
 const fs = require('fs');
+const aws = require('aws-sdk')
 const validateFile = require('../validations/fileValidation')
 
 exports.bill_create_file = (req, res) => { 
@@ -24,6 +25,14 @@ exports.bill_create_file = (req, res) => {
     const attachment = req.files[Object.keys(req.files)[0]]
     const putSingleID = req.params.id
     const filePath = '/tmp/webapp/'+req.params.id+'_'+escape(attachment.name)
+
+    const s3Bucket = new aws.S3();
+
+    var params = {
+        Bucket : 'vishakawebapptest',
+        Key : attachment.name,
+        Body : attachment.data
+    }
 
     validation_response = validateFile(req)
     if(validation_response.status != 200) {
@@ -78,32 +87,36 @@ exports.bill_create_file = (req, res) => {
                         attachment.id = uuidv4();
                         attachment.bill_id = result[0].id
                         console.log(filePath)
-                        attachment.mv(`${filePath}`, function(err) {
-                            attachment.url = `${filePath}`
-                            if(err){
-                                return res.status(400).send({
-                                    "message" : "Bad Request"
-                                })
+                        s3Bucket.upload(params, function(err, data) {
+                            if(err) {
+                                res.send({"message" : "Error"})
                             }
-                            const sql = "INSERT INTO File (file_name, id, url, upload_date, bill_id, mimeType, size, md5, originalName) VALUES (?,?,?,?,?,?,?,?,?)";
-                            connection.query(sql, [attachment.name, attachment.id, attachment.url, attachment.upload_date, attachment.bill_id, attachment.mimetype, attachment.size, attachment.md5, attachment.name], (err, results) => {
-                                if(err) {
-                                    return res.status(400).send(err)
-                                }
-                                resultDictionary = {
-                                    "file_name" : attachment.name,
-                                    "id" : attachment.id,
-                                    "url" : attachment.url,
-                                    "upload_date" : attachment.upload_date
-                                }
-                                const sql = 'UPDATE Bill set attachment = ? WHERE id = "'+putSingleID+'"'
-                                connection.query(sql, [JSON.stringify(resultDictionary)], (err, result) => {
-                                    if(err){
-                                        return res.status(400).send(err)
-                                    }
-                                    return res.status(201).send(resultDictionary)
-                                })
-                            })
+                            console.log("Success")
+                            // attachment.url = `${filePath}`
+                            // if(err){
+                            //     return res.status(400).send({
+                            //         "message" : "Bad Request"
+                            //     })
+                            // }
+                            // const sql = "INSERT INTO File (file_name, id, url, upload_date, bill_id, mimeType, size, md5, originalName) VALUES (?,?,?,?,?,?,?,?,?)";
+                            // connection.query(sql, [attachment.name, attachment.id, attachment.url, attachment.upload_date, attachment.bill_id, attachment.mimetype, attachment.size, attachment.md5, attachment.name], (err, results) => {
+                            //     if(err) {
+                            //         return res.status(400).send(err)
+                            //     }
+                            //     resultDictionary = {
+                            //         "file_name" : attachment.name,
+                            //         "id" : attachment.id,
+                            //         "url" : attachment.url,
+                            //         "upload_date" : attachment.upload_date
+                            //     }
+                            //     const sql = 'UPDATE Bill set attachment = ? WHERE id = "'+putSingleID+'"'
+                            //     connection.query(sql, [JSON.stringify(resultDictionary)], (err, result) => {
+                            //         i   f(err){
+                            //             return res.status(400).send(err)
+                            //         }
+                            //         return res.status(201).send(resultDictionary)
+                            //     })
+                            // })
                         })
                     })
                 })
