@@ -6,6 +6,8 @@ const fs = require('fs');
 const aws = require('aws-sdk')
 const validateFile = require('../validations/fileValidation')
 
+const s3Bucket = new aws.S3();
+
 exports.bill_create_file = (req, res) => { 
 
     const authenticateUser = basicAuthentication(req)
@@ -26,12 +28,14 @@ exports.bill_create_file = (req, res) => {
     const putSingleID = req.params.id
     const filePath = '/tmp/webapp/'+req.params.id+'_'+escape(attachment.name)
 
-    const s3Bucket = new aws.S3();
-
-    var params = {
-        Bucket : 'vishakawebapptest',
-        Key : attachment.name,
+    var uploadParams = {
+        Bucket : process.env.S3_BUCKET,
+        Key : putSingleID+"/"+attachment.name,
         Body : attachment.data
+    }
+    var listParams = {
+        Bucket : process.env.S3_BUCKET,
+        Prefix: putSingleID+"/"
     }
 
     validation_response = validateFile(req)
@@ -74,11 +78,27 @@ exports.bill_create_file = (req, res) => {
                                     return res.status(400).send(err)
                                 }
                             })
-                            const pathname = '/tmp/webapp/'
-                            const regex = RegExp(putSingleID+"*", "g")
-                            fs.readdirSync(pathname)
-                            .filter(f => regex.test(f))
-                            .map(f => fs.unlinkSync(pathname + f))
+                            s3Bucket.listObjectsV2(listParams, function(err, listResult) {
+                                if (err) {
+                                    return res.send(err) 
+                                }
+                                else {
+                                    if (listResult.Contents.length === 0) return;
+                                    const deleteParams = {
+                                        Bucket: process.env.S3_BUCKET,
+                                        Delete: { Objects: [] }
+                                    };
+                                    listResult.Contents.forEach(({ Key }) => {
+                                        deleteParams.Delete.Objects.push({ Key });
+                                    });
+                                    s3Bucket.deleteObjects(deleteParams, function(err, data) {
+                                        if (err) {
+                                            flag = true
+                                            return res.send(err)
+                                        }
+                                    })
+                                } 
+                            })
                         }
                         if (flag) {
                             return;
@@ -87,36 +107,31 @@ exports.bill_create_file = (req, res) => {
                         attachment.id = uuidv4();
                         attachment.bill_id = result[0].id
                         console.log(filePath)
-                        s3Bucket.upload(params, function(err, data) {
+                        s3Bucket.upload(uploadParams, function(err, data) {
                             if(err) {
-                                res.send({"message" : "Error"})
+                                return res.send(err)
                             }
                             console.log("Success")
-                            // attachment.url = `${filePath}`
-                            // if(err){
-                            //     return res.status(400).send({
-                            //         "message" : "Bad Request"
-                            //     })
-                            // }
-                            // const sql = "INSERT INTO File (file_name, id, url, upload_date, bill_id, mimeType, size, md5, originalName) VALUES (?,?,?,?,?,?,?,?,?)";
-                            // connection.query(sql, [attachment.name, attachment.id, attachment.url, attachment.upload_date, attachment.bill_id, attachment.mimetype, attachment.size, attachment.md5, attachment.name], (err, results) => {
-                            //     if(err) {
-                            //         return res.status(400).send(err)
-                            //     }
-                            //     resultDictionary = {
-                            //         "file_name" : attachment.name,
-                            //         "id" : attachment.id,
-                            //         "url" : attachment.url,
-                            //         "upload_date" : attachment.upload_date
-                            //     }
-                            //     const sql = 'UPDATE Bill set attachment = ? WHERE id = "'+putSingleID+'"'
-                            //     connection.query(sql, [JSON.stringify(resultDictionary)], (err, result) => {
-                            //         i   f(err){
-                            //             return res.status(400).send(err)
-                            //         }
-                            //         return res.status(201).send(resultDictionary)
-                            //     })
-                            // })
+                            attachment.url = data.Location
+                            const sql = "INSERT INTO File (file_name, id, url, upload_date, bill_id, mimeType, size, md5, originalName,s3_metadata) VALUES (?,?,?,?,?,?,?,?,?,?)";
+                            connection.query(sql, [attachment.name, attachment.id, attachment.url, attachment.upload_date, attachment.bill_id, attachment.mimetype, attachment.size, attachment.md5, attachment.name, JSON.stringify(data) ], (err, results) => {
+                                if(err) {
+                                    return res.status(400).send(err)
+                                }
+                                resultDictionary = {
+                                    "file_name" : attachment.name,
+                                    "id" : attachment.id,
+                                    "url" : attachment.url,
+                                    "upload_date" : attachment.upload_date
+                                }
+                                const sql = 'UPDATE Bill set attachment = ? WHERE id = "'+putSingleID+'"'
+                                connection.query(sql, [JSON.stringify(resultDictionary)], (err, result) => {
+                                    if(err){
+                                        return res.status(400).send(err)
+                                    }
+                                    return res.status(201).send(resultDictionary)
+                                })
+                            })
                         })
                     })
                 })
@@ -196,6 +211,10 @@ exports.bill_delete_file = (req, res) => {
     const fileID = req.params.fileid
     const billID = req.params.id
     const basicAuthCheck = req.headers.authorization
+    var listParams = {
+        Bucket : process.env.S3_BUCKET,
+        Prefix: billID+"/"
+    }
 
     if(!basicAuthCheck) {
         return res.status(401).send({
@@ -247,12 +266,28 @@ exports.bill_delete_file = (req, res) => {
                                         return res.status(400).send(err)
                                     }
                                 }) 
-                                const pathname = '/tmp/webapp/'
-                                const regex = RegExp(billID+"*", "g")
-                                fs.readdirSync(pathname)
-                                .filter(f => regex.test(f))
-                                .map(f => fs.unlinkSync(pathname + f))
-                
+                                s3Bucket.listObjectsV2(listParams, function(err, listResult) {
+                                    if (err) {
+                                        return res.send(err) 
+                                    }
+                                    else {
+                                        if (listResult.Contents.length === 0) return;
+                                        const deleteParams = {
+                                            Bucket: process.env.S3_BUCKET,
+                                            Delete: { Objects: [] }
+                                        };
+                                        listResult.Contents.forEach(({ Key }) => {
+                                            deleteParams.Delete.Objects.push({ Key });
+                                        });
+                                        deleteParams.Delete.Objects.push({ Key : billID });
+                                        s3Bucket.deleteObjects(deleteParams, function(err, data) {
+                                            if (err) {
+                                                flag = true
+                                                return res.send(err)
+                                            }
+                                        })
+                                    } 
+                                })
                             if(flag){
                                 return;
                             }
