@@ -7,6 +7,7 @@ const connection = mysql.createConnection({
     host : process.env.DB_HOST,
     user : process.env.DB_USER,
     password : process.env.DB_PASSWORD,
+    port : process.env.DB_PORT
 });
 
 connection.connect((err) => {
@@ -52,13 +53,14 @@ connection.connect((err) => {
     const createFile = `CREATE TABLE if not exists File (
         file_name varchar(100) NOT NULL,
         id varchar(100) NOT NULL,
-        url varchar(100) DEFAULT NULL,
+        url varchar(500) DEFAULT NULL,
         upload_date varchar(100) DEFAULT NULL,
         bill_id varchar(100) DEFAULT NULL,
         mimeType varchar(100) DEFAULT NULL,
         size double DEFAULT NULL,
         md5 varchar(100) DEFAULT NULL,
         originalName varchar(100) DEFAULT NULL,
+        s3_metadata varchar(1000) DEFAULT NULL,
         PRIMARY KEY (id),
         KEY foreign_key (bill_id),
         CONSTRAINT File_ibfk_1 FOREIGN KEY (bill_id) REFERENCES Bill (id))`;
