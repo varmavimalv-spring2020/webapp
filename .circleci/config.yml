@@ -22,11 +22,6 @@ jobs:
             done
             echo Failed waiting for MySQL && exit 1
       - run:
-          name: Install MySQL CLI; Import dummy data; run an example query
-          command: |
-            sudo apt-get install default-mysql-client
-            mysql -h 127.0.0.1 -u user -ppassw0rd Users < sql-data/create.sql
-      - run:
           name: update-npm
           command: 'sudo npm install -g npm@latest'
       - run:
@@ -56,11 +51,6 @@ jobs:
               sleep 1
             done
             echo Failed waiting for MySQL && exit 1
-      - run:
-          name: Install MySQL CLI; Import dummy data; run an example query
-          command: |
-            sudo apt-get install default-mysql-client
-            mysql -h 127.0.0.1 -u user -ppassw0rd Users < sql-data/create.sql
       - run:
           name: update-npm
           command: 'sudo npm install -g npm@latest'
