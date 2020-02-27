@@ -306,28 +306,37 @@ exports.bill_delete_file = (req, res) => {
                                         return res.status(400).send(err)
                                     }
                                 }) 
-                                s3Bucket.listObjectsV2(listParams, function(err, listResult) {
-                                    if (err) {
-                                        return res.send(err) 
-                                    }
-                                    else {
-                                        if (listResult.Contents.length === 0) return;
-                                        const deleteParams = {
-                                            Bucket: process.env.S3_BUCKET,
-                                            Delete: { Objects: [] }
-                                        };
-                                        listResult.Contents.forEach(({ Key }) => {
-                                            deleteParams.Delete.Objects.push({ Key });
-                                        });
-                                        deleteParams.Delete.Objects.push({ Key : billID });
-                                        s3Bucket.deleteObjects(deleteParams, function(err, data) {
-                                            if (err) {
-                                                flag = true
-                                                return res.send(err)
-                                            }
-                                        })
-                                    } 
-                                })
+                                if(process.env.S3_BUCKET) {
+                                    s3Bucket.listObjectsV2(listParams, function(err, listResult) {
+                                        if (err) {
+                                            return res.send(err) 
+                                        }
+                                        else {
+                                            if (listResult.Contents.length === 0) return;
+                                            const deleteParams = {
+                                                Bucket: process.env.S3_BUCKET,
+                                                Delete: { Objects: [] }
+                                            };
+                                            listResult.Contents.forEach(({ Key }) => {
+                                                deleteParams.Delete.Objects.push({ Key });
+                                            });
+                                            deleteParams.Delete.Objects.push({ Key : billID });
+                                            s3Bucket.deleteObjects(deleteParams, function(err, data) {
+                                                if (err) {
+                                                    flag = true
+                                                    return res.send(err)
+                                                }
+                                            })
+                                        } 
+                                    })
+                                }
+                                else {
+                                    const pathname = '/tmp/webapp/'
+                                    const regex = RegExp(billID+"*", "g")
+                                    fs.readdirSync(pathname)
+                                    .filter(f => regex.test(f))
+                                    .map(f => fs.unlinkSync(pathname + f))	
+                                }                                
                             if(flag){
                                 return;
                             }
