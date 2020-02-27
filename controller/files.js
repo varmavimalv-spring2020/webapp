@@ -78,27 +78,36 @@ exports.bill_create_file = (req, res) => {
                                     return res.status(400).send(err)
                                 }
                             })
-                            s3Bucket.listObjectsV2(listParams, function(err, listResult) {
-                                if (err) {
-                                    return res.send(err) 
-                                }
-                                else {
-                                    if (listResult.Contents.length === 0) return;
-                                    const deleteParams = {
-                                        Bucket: process.env.S3_BUCKET,
-                                        Delete: { Objects: [] }
-                                    };
-                                    listResult.Contents.forEach(({ Key }) => {
-                                        deleteParams.Delete.Objects.push({ Key });
-                                    });
-                                    s3Bucket.deleteObjects(deleteParams, function(err, data) {
-                                        if (err) {
-                                            flag = true
-                                            return res.send(err)
-                                        }
-                                    })
-                                } 
-                            })
+                            if(process.env.S3_BUCKET){
+                                s3Bucket.listObjectsV2(listParams, function(err, listResult) {
+                                    if (err) {
+                                        return res.send(err) 
+                                    }
+                                    else {
+                                        if (listResult.Contents.length === 0) return;
+                                        const deleteParams = {
+                                            Bucket: process.env.S3_BUCKET,
+                                            Delete: { Objects: [] }
+                                        };
+                                        listResult.Contents.forEach(({ Key }) => {
+                                            deleteParams.Delete.Objects.push({ Key });
+                                        });
+                                        s3Bucket.deleteObjects(deleteParams, function(err, data) {
+                                            if (err) {
+                                                flag = true
+                                                return res.send(err)
+                                            }
+                                        })
+                                    } 
+                                })
+                            }
+                            else{
+                                const pathname = '/tmp/webapp/'
+                                const regex = RegExp(putSingleID+"*", "g")
+                                fs.readdirSync(pathname)
+                                .filter(f => regex.test(f))
+                                .map(f => fs.unlinkSync(pathname + f))
+                            }   
                         }
                         if (flag) {
                             return;
@@ -107,32 +116,63 @@ exports.bill_create_file = (req, res) => {
                         attachment.id = uuidv4();
                         attachment.bill_id = result[0].id
                         console.log(filePath)
-                        s3Bucket.upload(uploadParams, function(err, data) {
-                            if(err) {
-                                return res.send(err)
-                            }
-                            console.log("Success")
-                            attachment.url = data.Location
-                            const sql = "INSERT INTO File (file_name, id, url, upload_date, bill_id, mimeType, size, md5, originalName,s3_metadata) VALUES (?,?,?,?,?,?,?,?,?,?)";
-                            connection.query(sql, [attachment.name, attachment.id, attachment.url, attachment.upload_date, attachment.bill_id, attachment.mimetype, attachment.size, attachment.md5, attachment.name, JSON.stringify(data) ], (err, results) => {
+                        if(process.env.S3_BUCKET) {
+                            s3Bucket.upload(uploadParams, function(err, data) {
                                 if(err) {
-                                    return res.status(400).send(err)
+                                    return res.send(err)
                                 }
-                                resultDictionary = {
-                                    "file_name" : attachment.name,
-                                    "id" : attachment.id,
-                                    "url" : attachment.url,
-                                    "upload_date" : attachment.upload_date
-                                }
-                                const sql = 'UPDATE Bill set attachment = ? WHERE id = "'+putSingleID+'"'
-                                connection.query(sql, [JSON.stringify(resultDictionary)], (err, result) => {
-                                    if(err){
+                                console.log("Success")
+                                attachment.url = data.Location
+                                const sql = "INSERT INTO File (file_name, id, url, upload_date, bill_id, mimeType, size, md5, originalName,s3_metadata) VALUES (?,?,?,?,?,?,?,?,?,?)";
+                                connection.query(sql, [attachment.name, attachment.id, attachment.url, attachment.upload_date, attachment.bill_id, attachment.mimetype, attachment.size, attachment.md5, attachment.name, JSON.stringify(data) ], (err, results) => {
+                                    if(err) {
                                         return res.status(400).send(err)
                                     }
-                                    return res.status(201).send(resultDictionary)
+                                    resultDictionary = {
+                                        "file_name" : attachment.name,
+                                        "id" : attachment.id,
+                                        "url" : attachment.url,
+                                        "upload_date" : attachment.upload_date
+                                    }
+                                    const sql = 'UPDATE Bill set attachment = ? WHERE id = "'+putSingleID+'"'
+                                    connection.query(sql, [JSON.stringify(resultDictionary)], (err, result) => {
+                                        if(err){
+                                            return res.status(400).send(err)
+                                        }
+                                        return res.status(201).send(resultDictionary)
+                                    })
                                 })
                             })
-                        })
+                        }
+                        else{
+                            attachment.mv(`${filePath}`, function(err) {
+                                attachment.url = `${filePath}`
+                                if(err) {
+                                    return res.status(400).send({
+                                        "message" : "Bad Request"
+                                    })
+                                }
+                                const sql = "INSERT INTO File (file_name, id, url, upload_date, bill_id, mimeType, size, md5, originalName) VALUES (?,?,?,?,?,?,?,?,?)";
+                                connection.query(sql, [attachment.name, attachment.id, attachment.url, attachment.upload_date, attachment.bill_id, attachment.mimetype, attachment.size, attachment.md5, attachment.name], (err, results) => {
+                                    if(err) {
+                                        return res.status(400).send(err)
+                                    }
+                                    resultDictionary = {
+                                        "file_name" : attachment.name,
+                                        "id" : attachment.id,
+                                        "url" : attachment.url,
+                                        "upload_date" : attachment.upload_date
+                                    }
+                                    const sql = 'UPDATE Bill set attachment = ? WHERE id = "'+putSingleID+'"'
+                                    connection.query(sql, [JSON.stringify(resultDictionary)], (err, result) => {
+                                        if(err){
+                                            return res.status(400).send(err)
+                                        }
+                                        return res.status(201).send(resultDictionary)
+                                    })
+                                })
+                            })
+                        }    
                     })
                 })
             } else {
