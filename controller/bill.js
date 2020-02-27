@@ -4,6 +4,9 @@ const validate = require('../validations/billValidation')
 const uuidv4 = require('uuid/v4')
 const basicAuthentication = require('basic-auth')
 const fs = require('fs');
+const aws = require('aws-sdk')
+
+const s3Bucket = new aws.S3();
 
 exports.users_create_bill = (req, res) => {
 
@@ -279,6 +282,10 @@ exports.delete_bill_id = (req, res) => {
     const authenticateUser = basicAuthentication(req)
     const deleteSingleId = req.params.id
     const basicAuthCheck = req.headers.authorization
+    var listParams = {
+        Bucket : process.env.S3_BUCKET,
+        Prefix: deleteSingleId+"/"
+    }
 
     if(!basicAuthCheck) {
         return res.status(401).send({
@@ -325,11 +332,27 @@ exports.delete_bill_id = (req, res) => {
                                         return res.status(400).send(err)
                                     }
                                 }) 
-                                const pathname = '/tmp/webapp/'
-                                const regex = RegExp(deleteSingleId+"*", "g")
-                                fs.readdirSync(pathname)
-                                .filter(f => regex.test(f))
-                                .map(f => fs.unlinkSync(pathname + f))
+                                s3Bucket.listObjectsV2(listParams, function(err, listResult) {
+                                    if (err) {
+                                        return res.send(err) 
+                                    }
+                                    else {
+                                        if (listResult.Contents.length === 0) return;
+                                        const deleteParams = {
+                                            Bucket: process.env.S3_BUCKET,
+                                            Delete: { Objects: [] }
+                                        };
+                                        listResult.Contents.forEach(({ Key }) => {
+                                            deleteParams.Delete.Objects.push({ Key });
+                                        });
+                                        s3Bucket.deleteObjects(deleteParams, function(err, data) {
+                                            if (err) {
+                                                flag = true
+                                                return res.send(err)
+                                            }
+                                        })
+                                    } 
+                                })
                 
                             if(flag){
                                 return;
