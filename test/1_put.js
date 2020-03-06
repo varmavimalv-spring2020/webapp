@@ -7,7 +7,7 @@ const expect = chai.expect
  describe('PUT /users/self', () => {
     it('No Content Added to Update', function(done) {
         supertest(app)
-        .put('/users/self')
+        .put('/v1/users/self')
         .auth('jane.doe@example.com', 'Welcome@123')
         .send({
 
@@ -20,7 +20,7 @@ const expect = chai.expect
   describe('PUT /users/self', () => {
     it('Cannot Update Email', function(done) {
         supertest(app)
-        .put('/users/self')
+        .put('/v1/users/self')
         .auth('jane.doe@example.com', 'Welcome@123')
         .send({
             "first_name": "Jane",
@@ -36,7 +36,7 @@ const expect = chai.expect
   describe('PUT /users/self', () => {
     it('Updated Successfully', function(done) {
         supertest(app)
-        .put('/users/self')
+        .put('/v1/users/self')
         .auth('jane.doe@example.com', 'Welcome@123')
         .send({
             "first_name": "Jane",
