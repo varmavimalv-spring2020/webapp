@@ -14,8 +14,8 @@ if(!fs.existsSync(dir)){
 
 app.use(express.json());
 app.use(fileUpload());
-app.use('/users', userRoutes);
-app.use('/bill', userBill);
-app.use('/bill', billFile);
+app.use('v1/users', userRoutes);
+app.use('v1/bill', userBill);
+app.use('v1/bill', billFile);
 
 module.exports = app;

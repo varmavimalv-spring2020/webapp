@@ -41,6 +41,17 @@ jobs:
           MYSQL_PASSWORD: passw0rd
     steps:
       - checkout
+      - run:
+          name: Install AWS CLI
+          command: |
+            sudo apt-get install unzip
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
+          name: AWS configure
+          command: |
+            aws configure list
       - run: # https://circleci.com/docs/2.0/postgres-config/#example-mysql-project
           name: Waiting for MySQL to be ready
           command: |
@@ -60,6 +71,25 @@ jobs:
       - run:
           name: test
           command: npm test
+          - run:
+          name: Push Deployment
+          command: |
+            aws deploy push \
+            --application-name csye6225-webapp \
+            --description "Code deploy Webapp" \
+            --ignore-hidden-files \
+            --s3-location s3://codedeploy.vishakavarma.com/webapp.zip \
+            --source .
+      - run:
+          name: Create Deployment
+          command: |
+            aws deploy create-deployment \
+            --application-name csye6225-webapp \
+            --s3-location bucket=codedeploy.vishakavarma.com,key=webapp.zip,bundleType=zip \
+            --deployment-group-name csye6225-webapp-deployment \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --description "Code deploy Test"
+      
 
 workflows:
   version: 2
@@ -74,4 +104,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - a7
