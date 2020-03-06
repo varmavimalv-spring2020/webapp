@@ -7,7 +7,7 @@ const expect = chai.expect
 describe('GET /bill/:id', () => {
     it('Unsuccessful Login', function(done) {
         supertest(app)
-        .get('/bill/:id')
+        .get('v1/bill/:id')
         .auth('jane.doe@example.com', 'Welme@123')
         .expect(404,done)
     })

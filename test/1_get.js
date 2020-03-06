@@ -7,7 +7,7 @@ const expect = chai.expect
 describe('GET /users/self', () => {
     it('User logged in successfully', function(done) {
         supertest(app)
-        .get('/users/self')
+        .get('v1/users/self')
         .auth('jane.doe@example.com', 'Welcome@123')
         .expect(200,done)
     })
@@ -17,7 +17,7 @@ describe('GET /users/self', () => {
 describe('GET /users/self', () => {
     it('Unsuccessful Login', function(done) {
         supertest(app)
-        .get('/users/self')
+        .get('v1/users/self')
         .auth('jane.doe@example.com', 'Welme@123')
         .expect(401,done)
     })

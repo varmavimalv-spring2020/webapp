@@ -6,7 +6,7 @@ const app = require('../app');
 describe('POST /bill', () => {
     it('Unsuccessful Login', function(done) {
         supertest(app)
-        .post('/bill')
+        .post('v1/bill')
         .auth('jane.doe@example.com', 'Welme@123')
         .send({
             "vendor": "Northeastern University",
@@ -29,7 +29,7 @@ describe('POST /bill', () => {
 describe('POST /bill', () => {
     it('Add all contents to create', function(done) {
         supertest(app)
-        .post('/bill')
+        .post('v1/bill')
         .auth('jane.doe@example.com', 'ChangePass@123')
         .send({
             "vendor": "Northeastern University",
@@ -50,7 +50,7 @@ describe('POST /bill', () => {
 describe('POST /bill', () => {
     it('Okay, no duplicates allowed for categories', (done) => {
         supertest(app)
-        .post('/bill')
+        .post('v1/bill')
         .auth('jane.doe@example.com', 'ChangePass@123')
         .send({
             "vendor": "Northeastern University",
@@ -73,7 +73,7 @@ describe('POST /bill', () => {
 describe('POST /bill', () => {
     it('Okay, cannot create incorrect date format', (done) => {
         supertest(app)
-        .post('/bill')
+        .post('v1/bill')
         .auth('jane.doe@example.com', 'ChangePass@123')
         .send({
             "vendor": "Northeastern University",
@@ -96,7 +96,7 @@ describe('POST /bill', () => {
 describe('POST /bill', () => {
     it('Okay, Create bill', (done) => {
         supertest(app)
-        .post('/bill')
+        .post('v1/bill')
         .auth('jane.doe@example.com', 'ChangePass@123')
         .send({
             "vendor": "Northeastern University",

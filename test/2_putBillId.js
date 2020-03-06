@@ -9,7 +9,7 @@ describe('PUT /bill/:id', () => {
         it('Unsuccessful Login', function(done) {
             connection.query('SELECT id from Bill', (err, result) => {
             supertest(app)
-            .put('/bill/' +result[0].id)
+            .put('v1/bill/' +result[0].id)
             .auth('jane.doe@example.com', 'Welme@123')
             .send({
                 "vendor": "Northeastern University",
@@ -33,7 +33,7 @@ describe('PUT /bill/:id', () => {
         it('Add all contents to create', function(done) {
             connection.query('SELECT id from Bill', (err, result) => {
             supertest(app)
-            .put('/bill/' +result[0].id)
+            .put('v1/bill/' +result[0].id)
             .auth('jane.doe@example.com', 'ChangePass@123')
             .send({
                 "vendor": "Northeastern University",
@@ -56,7 +56,7 @@ describe('PUT /bill/:id', () => {
     it('Okay, no duplicates allowed for categories', (done) => {
         connection.query('SELECT id from Bill', (err, result) => {
         supertest(app)
-        .put('/bill/' +result[0].id)
+        .put('v1/bill/' +result[0].id)
         .auth('jane.doe@example.com', 'ChangePass@123')
         .send({
             "vendor": "Northeastern University",
@@ -80,7 +80,7 @@ describe('PUT /bill/:id', () => {
     it('Okay, Create bill', (done) => {
         connection.query('SELECT id from Bill', (err, result) => {
         supertest(app)
-        .put('/bill/' +result[0].id)
+        .put('v1/bill/' +result[0].id)
         .auth('jane.doe@example.com', 'ChangePass@123')
         .send({
             "vendor": "Northeastern University",

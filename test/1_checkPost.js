@@ -6,7 +6,7 @@ const app = require('../app');
 describe('POST /users', () => {
     it('Okay, Cannot create with wrong Password', (done) => {
         supertest(app)
-        .post('/users')
+        .post('v1/users')
         .send({
             "first_name": "Jane",
             "last_name": "Doe",
@@ -21,7 +21,7 @@ describe('POST /users', () => {
 describe('POST /users', () => {
     it('Okay, Cannot create with wrong email ID', (done) => {
         supertest(app)
-        .post('/users')
+        .post('v1/users')
         .send({
             "first_name": "Jane",
             "last_name": "Doe",
@@ -36,7 +36,7 @@ describe('POST /users', () => {
 describe('POST /users', () => {
     it('Okay, account_updated cannot be changed', (done) => {
         supertest(app)
-        .post('/users')
+        .post('v1/users')
         .send({
             "first_name": "Jane",
             "last_name": "Doe",
@@ -52,7 +52,7 @@ describe('POST /users', () => {
 describe('POST /users', () => {
     it('Okay, Creating a new user works', (done) => {
         supertest(app)
-        .post('/users')
+        .post('v1/users')
         .send({
             "first_name": "Jane",
             "last_name": "Doe",
@@ -67,7 +67,7 @@ describe('POST /users', () => {
 describe('POST /users', () => {
     it('Okay, Error For Duplicate Email Works', (done) => {
         supertest(app)
-        .post('/users')
+        .post('v1/users')
         .send({
             "first_name": "Jane",
             "last_name": "Doe",
