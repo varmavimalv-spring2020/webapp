@@ -71,7 +71,7 @@ jobs:
       - run:
           name: test
           command: npm test
-          - run:
+      - run:
           name: Push Deployment
           command: |
             aws deploy push \
