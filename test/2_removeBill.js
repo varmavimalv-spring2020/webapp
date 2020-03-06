@@ -9,7 +9,7 @@ describe('DELETE /bill/:id', () => {
         it('Deleted', function(done) {
             connection.query('SELECT id from Bill', (err, result) => {
             supertest(app)
-            .delete('v1/bill/' +result[0].id)
+            .delete('/v1/bill/' +result[0].id)
             .auth('jane.doe@example.com', 'ChangePass@123')
             .expect(204,done)
         })
