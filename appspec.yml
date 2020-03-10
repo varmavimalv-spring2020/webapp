@@ -4,7 +4,7 @@ files:
   - source: /
     destination: /home/ubuntu/webapp/
 permissions:
-  - object: /home/ubuntu/webapp/
+  - object: /home/ubuntu/webapp
     owner: ubuntu
     mode: 666
     type:
