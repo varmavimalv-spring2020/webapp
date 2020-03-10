@@ -3,6 +3,12 @@ os: linux
 files:
   - source: /
     destination: /home/ubuntu/webapp/
+permissions:
+  - object: /home/ubuntu/webapp/
+    owner: ubuntu
+    mode: 666
+    type:
+      - directory
 hooks:
   BeforeInstall:
     - location: scripts/before_install.sh
