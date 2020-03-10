@@ -10,3 +10,6 @@ hooks:
   AfterInstall:
     - location: scripts/after_install.sh
       runas: ubuntu
+  ApplicationStart:
+    - location: scripts/start_server.sh
+      runas: ubuntu
