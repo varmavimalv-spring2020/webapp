@@ -79,14 +79,14 @@ jobs:
             --application-name csye6225-webapp \
             --description "Code deploy Webapp" \
             --ignore-hidden-files \
-            --s3-location s3://codedeploy.vishakavarma.com/webapp.zip \
+            --s3-location s3://codedeployprod.vishakavarma.com/webapp.zip \
             --source .
       - run:
           name: Create Deployment
           command: |
             aws deploy create-deployment \
             --application-name csye6225-webapp \
-            --s3-location bucket=codedeploy.vishakavarma.com,key=webapp.zip,bundleType=zip \
+            --s3-location bucket=codedeployprod.vishakavarma.com,key=webapp.zip,bundleType=zip \
             --deployment-group-name csye6225-webapp-deployment \
             --deployment-config-name CodeDeployDefault.AllAtOnce \
             --description "Code deploy Test"
