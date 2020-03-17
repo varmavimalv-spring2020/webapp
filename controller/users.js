@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt')
 const uuidv4 = require('uuid/v4')
 const basicAuthentication = require('basic-auth')
 const saltRounds = 10
+const logger = require('../winston_config')
 
 exports.users_get_user_self = (req, res) => {
     const authenticateUser = basicAuthentication(req)
@@ -136,6 +137,7 @@ exports.users_create = (req, res) => {
                                     throw err;
                                 }
                             delete data.password;
+                            logger.info(`user with id ${data.id} created`)
                             return res.status(201).send(data)   
                             });
                         })

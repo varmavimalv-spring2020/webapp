@@ -75,6 +75,7 @@ jobs:
       - run:
           name: Push Deployment
           command: |
+            sudo rm -rf node_modules
             aws deploy push \
             --application-name csye6225-webapp \
             --description "Code deploy Webapp" \
