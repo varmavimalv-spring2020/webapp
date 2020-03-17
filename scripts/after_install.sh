@@ -8,6 +8,8 @@ sudo rm -rf package-lock.json
 sudo cp configs/cloudwatch-config.json /opt/cloudwatch-config.json
 sudo cp /var/.env /home/ubuntu/webapp/
 sudo chmod 666 /home/ubuntu/webapp/.env
+sudo chmod 777 /home/ubuntu/webapp/logs
+sudo chmod 666 /home/ubuntu/webapp/logs/webapp.log
 cd /home/ubuntu/webapp
 npm install
 sudo npm install forever -g
