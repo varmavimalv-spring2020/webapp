@@ -6,8 +6,12 @@ const uuidv4 = require('uuid/v4')
 const basicAuthentication = require('basic-auth')
 const saltRounds = 10
 const logger = require('../winston_config')
+const sdc = require('../statsd')
+var start = Date.now()
 
 exports.users_get_user_self = (req, res) => {
+    sdc.increment("Get user API called")
+    sdc.timing("This is how long it took to process GET users API", Date.now()-start)
     const authenticateUser = basicAuthentication(req)
     const basicAuthCheck = req.headers.authorization
 
@@ -64,7 +68,8 @@ exports.users_get_user_self = (req, res) => {
 }
 
 exports.users_create = (req, res) => {
-
+    sdc.increment("Create/POST user API called")
+    sdc.timing("This is how long it took to process create/POST users API", Date.now()-start)
     //invalid_passwords.txt has the top 100000 most common passwords
     //The text file is provided by NIST at https://cry.github.io/nbp/
     //NIST Bad Passwords (NBP) comes with password lists sourced from SecLists by Daniel Miessler.
@@ -150,7 +155,8 @@ exports.users_create = (req, res) => {
 }
 
 exports.users_update = (req, res) => {
-
+    sdc.increment("Update/PUT user API called")
+    sdc.timing("This is how long it took to process update/PUT users API", Date.now()-start)
     const invalid_passwords = fs.readFileSync('invalid_passwords.txt').toString().split("\n")
     const data = req.body
     const schemaPassword = joi.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/).invalid(invalid_passwords)

@@ -16,7 +16,6 @@ app.use(express.json());
 app.use(fileUpload());
 app.use('/v1/users', userRoutes);
 app.use('/v1/bill', userBill);
-app.use('/v2/bill', userBill);
 app.use('/v1/bill', billFile);
 
 module.exports = app;
