@@ -32,7 +32,7 @@ exports.users_get_user_self = (req, res) => {
     //if both credentials given, check if the email exists in database, if it exists, check if the passwords match
     else{
         connection.query('SELECT * FROM UsersData where email_address = "'+authenticateUser.name+'"', (err, value) => {
-            sdc.timing('timing.get.user_api.fetch_email')
+            sdc.timing('timing.get.user_api.fetch_email', Date.now()-start)
             if(err){
                 logger.error('user_GET:Error - Requested email not found')
                 res.status(400).send(err)
@@ -47,7 +47,7 @@ exports.users_get_user_self = (req, res) => {
                 if(bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) {
                     if(match){
                         connection.query('SELECT id, first_name, last_name, email_address, account_created, account_updated FROM UsersData where email_address = ?', authenticateUser.name, (err, result) => {
-                            sdc.timing('timing.get.user_api.get_records')
+                            sdc.timing('timing.get.user_api.get_records', Date.now()-start)
                             if(err){
                                 logger.error('user_GET:Error - cannot fetch user records')
                                 res.status(400).send(err)
@@ -119,7 +119,7 @@ exports.users_create = (req, res) => {
 
     else{
         connection.query('SELECT COUNT(*) AS count FROM UsersData where email_address = "'+emailAddress+'"', (err, value) => {
-            sdc.timing('timing.post.user_api.check_email')
+            sdc.timing('timing.post.user_api.check_email', Date.now()-start)
             if(err){
                 logger.error("user_POST:Error - in checking email")
                 res.status(400).send(err)
@@ -150,7 +150,7 @@ exports.users_create = (req, res) => {
                             const sql = "INSERT INTO UsersData (id, email_address, password, first_name, last_name, account_created, account_updated) VALUES (?,?,?,?,?,?,?)";
                             const query = connection.query(sql, [data.id, data.email_address, hash,
                                 data.first_name, data.last_name, data.account_created, data.account_updated],(err, results) => {
-                                sdc.timing('timing.post.user_api.data_insert')
+                                sdc.timing('timing.post.user_api.data_insert', Date.now()-start)
                                 if(err) {
                                     logger.error('user_POST:Error - in inserting data')
                                     throw err;
@@ -249,7 +249,7 @@ exports.users_update = (req, res) => {
                                 bcrypt.hash(data.password, saltRounds).then(function(hash) {
                                     const sql = 'UPDATE UsersData SET first_name = ?, last_name = ?, password = ?, account_updated = ? WHERE email_address = "'+authenticateUser.name+'"'
                                     connection.query(sql, [data.first_name, data.last_name, hash, data.account_updated], (err, value) => {
-                                        sdc.timing("timing.put.user_api.update records")
+                                        sdc.timing("timing.put.user_api.update records", Date.now()-start)
                                         if(err){
                                             return res.status(400).send(err)
                                         }
@@ -275,4 +275,5 @@ exports.users_update = (req, res) => {
 
         });
     }
+    sdc.timing("timing.put.user_api", Date.now()-start)
 }
