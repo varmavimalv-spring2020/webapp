@@ -5,20 +5,24 @@ const basicAuthentication = require('basic-auth')
 const fs = require('fs');
 const aws = require('aws-sdk')
 const validateFile = require('../validations/fileValidation')
-
+const logger = require('../winston_config')
+var sdc = require('../statsd')
 const s3Bucket = new aws.S3();
 
 exports.bill_create_file = (req, res) => { 
-
+    const start = Date.now()
+    sdc.increment("counter.post.file_api")
     const authenticateUser = basicAuthentication(req)
 
     if (!req.files || Object.keys(req.files).length === 0) {
+        logger.info("file_POST:INFO - no file attached")
         return res.status(400).send({
             "message" : "Please attach a file"
         })
     }
 
     else if(Object.keys(req.files).length > 1){
+        logger.info("file_POST:INFO - more than 1 file attached")
         return res.status(400).send({
             "message" : "You may attach only one file at a time"
         })
@@ -47,10 +51,13 @@ exports.bill_create_file = (req, res) => {
     }
     //if both credentials given, check if the email exists in database, if it exists, check if the passwords match
     connection.query('SELECT * FROM UsersData where email_address = "'+authenticateUser.name+'"', (err, value) => {
+        sdc.timing("timing.post.file_api.check_email", Date.now()-start)
         if(err) {
+            logger.error("file_POST:Error - in checking email")
             return res.status(400).send(err)
         }
         if(value.length == 0) {
+            logger.info("file_POST:INFO - no email records found")
             return res.status(400).send({
                 "message" : "No such email-id exists"
             })
@@ -58,28 +65,36 @@ exports.bill_create_file = (req, res) => {
         bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) {
             if(match) {
                 connection.query('SELECT Bill.* FROM Bill INNER JOIN UsersData on Bill.owner_id = "'+value[0].id+'" AND Bill.id = "'+putSingleID+'"', (err, result) => {
+                    sdc.timing("timing.post.file_api.check_bill", Date.now()-start)
                     if(err) {
+                        logger.error("file_POST:Error - in checking bills")
                         return res.status(400).send(err)
                     }
                     else if(result.length == 0) {
+                        logger.info("file_POST:INFO - no bill records found")
                         return res.status(404).send({
                             "message" : "No bills available for the requested ID"
                         })
                     }
                     connection.query('SELECT bill_id FROM File where bill_id = "'+putSingleID+'"', (err, ans) => {
+                        sdc.timing("timing.post.file_api.get_bill_for_file", Date.now()-start)
                         var flag = false;
                         if(err) {
+                            logger.error("file_POST:Error - in fetching bills")
                             return res.status(400).send(err)
                         }
                         else if(ans.length !== 0) {
                             connection.query('DELETE FROM File WHERE bill_id = "'+putSingleID+'"',(err) => {
+                                sdc.timing("timing.post.file_api.delete_file_before_create", Date.now()-start)
                                 if(err){
                                     flag = true;
                                     return res.status(400).send(err)
                                 }
                             })
                             if(process.env.S3_BUCKET){
+                                const start = Date.now()
                                 s3Bucket.listObjectsV2(listParams, function(err, listResult) {
+                                    sdc.timing("timing.post.file_api.delete_file_S3", Date.now()-start)
                                     if (err) {
                                         return res.send(err) 
                                     }
@@ -100,6 +115,7 @@ exports.bill_create_file = (req, res) => {
                                         })
                                     } 
                                 })
+                                logger.info("file_POST:INFO - bill deleted from S3")
                             }
                             else{
                                 const pathname = '/tmp/webapp/'
@@ -117,14 +133,16 @@ exports.bill_create_file = (req, res) => {
                         attachment.bill_id = result[0].id
                         console.log(filePath)
                         if(process.env.S3_BUCKET) {
+                            const start = Date.now()
                             s3Bucket.upload(uploadParams, function(err, data) {
+                                sdc.timing("timing.post.file_api.create_file_S3", Date.now()-start)
                                 if(err) {
                                     return res.send(err)
                                 }
-                                console.log("Success")
                                 attachment.url = data.Location
                                 const sql = "INSERT INTO File (file_name, id, url, upload_date, bill_id, mimeType, size, md5, originalName,s3_metadata) VALUES (?,?,?,?,?,?,?,?,?,?)";
                                 connection.query(sql, [attachment.name, attachment.id, attachment.url, attachment.upload_date, attachment.bill_id, attachment.mimetype, attachment.size, attachment.md5, attachment.name, JSON.stringify(data) ], (err, results) => {
+                                    sdc.timing("timing.post.file_api.insert_file_DB", Date.now()-start)
                                     if(err) {
                                         return res.status(400).send(err)
                                     }
@@ -136,12 +154,14 @@ exports.bill_create_file = (req, res) => {
                                     }
                                     const sql = 'UPDATE Bill set attachment = ? WHERE id = "'+putSingleID+'"'
                                     connection.query(sql, [JSON.stringify(resultDictionary)], (err, result) => {
+                                        sdc.timing("timing.post.file_api.update_bill_DB", Date.now()-start)
                                         if(err){
                                             return res.status(400).send(err)
                                         }
                                         return res.status(201).send(resultDictionary)
                                     })
                                 })
+                                logger.info(`file_POST:INFO - file ${attachment.name} uploaded to S3`)
                             })
                         }
                         else{
@@ -168,6 +188,7 @@ exports.bill_create_file = (req, res) => {
                                         if(err){
                                             return res.status(400).send(err)
                                         }
+                                        logger.info(`file_POST:INFO - file ${attachment.name} inserted`)
                                         return res.status(201).send(resultDictionary)
                                     })
                                 })
@@ -176,15 +197,19 @@ exports.bill_create_file = (req, res) => {
                     })
                 })
             } else {
+                logger.error(`file_POST:ERROR - invalid credentials`)
                 return res.status(404).send({
                     "message" : "Invalid Password"
                 })
             }
         })
     })
+    sdc.timing("timing.post.file_api", Date.now()-start)
 }
 
 exports.bill_get_file = (req, res) => {
+    const start = Date.now()
+    sdc.increment("counter.get.file_api")
     const authenticateUser = basicAuthentication(req)
     const basicAuthCheck = req.headers.authorization
     const billID = req.params.id
@@ -197,16 +222,20 @@ exports.bill_get_file = (req, res) => {
     }
 
     else if(!authenticateUser.name || !authenticateUser.pass){
+        logger.error("file_GET:Error - Access without credentials")
         return res.status(400).send({
             "message" : "Please provide email and password"
         })
     }
 
     connection.query('SELECT * FROM UsersData where email_address = "'+authenticateUser.name+'"', (err, value) => {
+        sdc.timing("timing.get.file_api.check_email", Date.now()-start)
         if(err){
+            logger.error("file_GET:Error - in checking email")
             res.status(400).send(err)
         }
         else if(value.length == 0){
+            logger.info("file_GET:INFO - no email records found")
             res.status(400).send({
                 "message" : "No such email-id exists"
             })
@@ -215,10 +244,13 @@ exports.bill_get_file = (req, res) => {
             bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) {
                 if(match){
                     connection.query('SELECT Bill.* FROM Bill INNER JOIN UsersData on Bill.owner_id = "'+value[0].id+'" AND Bill.id = "'+billID+'"', (err, result) => {
+                        sdc.timing("timing.get.file_api.check_bills", Date.now()-start)
                         if(err){
+                            logger.error("file_GET:Error - in checking bills")
                             return res.status(400).send(err)
                         }
                         else if(result.length == 0){
+                            logger.info("file_GET:INFO - no bill records found")
                             return res.status(404).send({
                                 "message" : "No bills available for the requested ID"
                             })
@@ -244,9 +276,12 @@ exports.bill_get_file = (req, res) => {
             });
         }
     })
+    sdc.timing("timing.get.file_api", Date.now()-start)
 }
 
 exports.bill_delete_file = (req, res) => {
+    const start = Date.now()
+    sdc.increment("counter.delete.file_api")
     const authenticateUser = basicAuthentication(req)
     const fileID = req.params.fileid
     const billID = req.params.id
@@ -264,15 +299,19 @@ exports.bill_delete_file = (req, res) => {
 
     //check if the user has provided both email and password
     if(!authenticateUser.name || !authenticateUser.pass){
+        logger.error("file_DELETE:Error - Access without credentials")
         return res.status(400).send({
             "message" : "Please provide email and password"
         })
     }
     connection.query('SELECT * FROM UsersData where email_address = "'+authenticateUser.name+'"', (err, value) => {
+        sdc.timing("timing.delete.file_api.check_email", Date.now()-start)
         if(err){
+            logger.error("file_DELETE:Error - in checking email")
             res.status(400).send(err)
         }
         else if(value.length == 0){
+            logger.info("file_DELETE:INFO - no email records found")
             res.status(400).send({
                 "message" : "No such email-id exists"
             })
@@ -281,35 +320,43 @@ exports.bill_delete_file = (req, res) => {
             bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) { 
                 if(match){
                     connection.query('SELECT Bill.id FROM Bill INNER JOIN UsersData on Bill.owner_id = "'+value[0].id+'" AND Bill.id = "'+billID+'"', (err, result) => {
+                        sdc.timing("timing.delete.file_api.check_bills", Date.now()-start)
                         var flag = false;
                         if(err){
+                            logger.error("file_DELETE:Error - in checking bills")
                             return res.status(400).send(err)
                         }
                         else if(result.length == 0){
+                            logger.info("file_DELETE:INFO - no bill records found")
                             return res.status(404).send({
                                 "message" : "No bills available for the requested ID"
                             })
                         }
                         connection.query('SELECT file_name, id, url, upload_date FROM File WHERE id = "'+fileID+'" AND bill_id = "'+billID+'"', (err, result) => {
+                            sdc.timing("timing.delete.file_api.check_file", Date.now()-start)
                             if(err){
+                                logger.error("file_DELETE:Error - in checking file")
                                 return res.status(400).send(err)
                             }
                             else if(result.length == 0){
+                                logger.info("file_DELETE:INFO - no file records found")
                                 return res.status(404).send({
                                     "message" : "No Files available for the requested ID"
                                 })
                             } 
                             else{
                                 connection.query('DELETE FROM File WHERE id = "'+fileID+'"',(err) => {
+                                    sdc.timing("timing.delete.file_api.delete_file", Date.now()-start)
                                     if(err){
+                                        logger.error("file_DELETE:Error - in deleting file")
                                         flag = true;
                                         return res.status(400).send(err)
                                     }
                                 }) 
                                 if(process.env.S3_BUCKET) {
-                                    //start
+                                    const start = Date.now()
                                     s3Bucket.listObjectsV2(listParams, function(err, listResult) {
-                                        //timer
+                                        sdc.timing("timing.delete.bill_api.delete_file_S3", Date.now()-start)
                                         if (err) {
                                             return res.send(err) 
                                         }
@@ -331,6 +378,7 @@ exports.bill_delete_file = (req, res) => {
                                             })
                                         } 
                                     })
+                                    logger.info("file_DELETE:INFO - file deleted from S3")
                                 }
                                 else {
                                     const pathname = '/tmp/webapp/'
@@ -343,6 +391,8 @@ exports.bill_delete_file = (req, res) => {
                                 return;
                             }
                             connection.query('UPDATE Bill SET attachment = "'+JSON.stringify(new Object)+'" WHERE id = "'+billID+'"', (err, result) => {
+                                sdc.timing("timing.delete.file_api.delete_file_from_bill", Date.now()-start)
+                                logger.info("file_DELETE:INFO - file deleted from S3")
                                 return res.status(204).send({
                                     "message" : "Deleted Successfully"
                                 })
@@ -353,6 +403,7 @@ exports.bill_delete_file = (req, res) => {
                     })
                 }
                 else{
+                    logger.error("file_DELETE:Error - invalid credentials")
                     res.status(404).send({
                         "message" : "Please enter valid and correct credentials."
                     })
