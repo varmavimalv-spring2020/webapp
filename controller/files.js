@@ -307,7 +307,9 @@ exports.bill_delete_file = (req, res) => {
                                     }
                                 }) 
                                 if(process.env.S3_BUCKET) {
+                                    //start
                                     s3Bucket.listObjectsV2(listParams, function(err, listResult) {
+                                        //timer
                                         if (err) {
                                             return res.send(err) 
                                         }
