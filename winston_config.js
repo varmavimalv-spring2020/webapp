@@ -10,8 +10,8 @@ if(!fs.existsSync(logsDir)){
 const logger = winston.createLogger({
     format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.json(),
-        winston.format.timestamp()
+        winston.format.timestamp(),
+        winston.format.json()
     ),
     transports: [
         new winston.transports.File({
