@@ -356,7 +356,7 @@ exports.bill_delete_file = (req, res) => {
                                 if(process.env.S3_BUCKET) {
                                     const start = Date.now()
                                     s3Bucket.listObjectsV2(listParams, function(err, listResult) {
-                                        sdc.timing("timing.delete.bill_api.delete_file_S3", Date.now()-start)
+                                        sdc.timing("timing.delete.file_api.delete_file_S3", Date.now()-start)
                                         if (err) {
                                             return res.send(err) 
                                         }
@@ -411,4 +411,5 @@ exports.bill_delete_file = (req, res) => {
             })
         }
     })
+    sdc.timing("timing.delete.file_api", Date.now()-start)
 }
