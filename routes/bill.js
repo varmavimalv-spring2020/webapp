@@ -15,6 +15,9 @@ router.get('/', userBill.users_get_bills);
 //GET API to get a bill based on ID from controller/bill.js
 router.get('/:id', userBill.users_get_bills_id); 
 
+//GET API to get a bill due in x days from controller/bill.js
+router.get('/due/:x', userBill.users_get_bills_due); 
+
 //PUT API to update a bill based on ID from controller/bill.js
 router.put('/:id', userBill.users_update_bills_id);
 
