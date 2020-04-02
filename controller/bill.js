@@ -472,7 +472,7 @@ exports.users_get_bills_due = (req, res) => {
     const billId = req.params.id
     const basicAuthCheck = req.headers.authorization
     const numberOfDays = req.params.x
-    aws.config.update({region: 'us-east-1'});
+    aws.config.update({region: process.env.SQS_REGION});
     var sqs = new aws.SQS({apiVersion: '2012-11-05'});
 
     if(!basicAuthCheck) {
@@ -515,14 +515,18 @@ exports.users_get_bills_due = (req, res) => {
                                 "NumberOfDays": {
                                     DataType: "Number",
                                     StringValue: `${numberOfDays}`
+                                },
+                                "UserID": {
+                                    DataType: "String",
+                                    StringValue: value[0].id
                                 }
                             },
                             MessageBody: "Test",
-                            QueueUrl: "https://sqs.us-east-1.amazonaws.com/738768614159/TestQueue"
+                            QueueUrl: process.env.SQS_URL
                         };
                         sqs.sendMessage(params, function(err, data) {
                             if (err) {
-                              return res.status(400).send(err)
+                                return res.status(400).send(err)
                             } 
                         });
                         return res.status(200).send({"message" : "Success"})
