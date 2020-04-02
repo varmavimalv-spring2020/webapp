@@ -464,3 +464,78 @@ exports.delete_bill_id = (req, res) => {
     }
     sdc.timing("timing.delete.bill_api", Date.now()-start)
 }
+
+exports.users_get_bills_due = (req, res) => {
+    const start = Date.now()
+    sdc.increment("counter.get.bill_due_api")
+    const authenticateUser = basicAuthentication(req)
+    const billId = req.params.id
+    const basicAuthCheck = req.headers.authorization
+    const numberOfDays = req.params.x
+    aws.config.update({region: process.env.SQS_REGION});
+    var sqs = new aws.SQS({apiVersion: '2012-11-05'});
+
+    if(!basicAuthCheck) {
+        return res.status(401).send({
+            "message" : "Unauthorized Access"
+        })
+    }
+
+    //check if the user has provided both email and password
+    if(!authenticateUser.name || !authenticateUser.pass){
+        logger.error("bill_GET_ID:Error - Access without credentials")
+        return res.status(400).send({
+            "message" : "Please provide email and password"
+        })
+    }
+
+    else {
+        connection.query('SELECT * FROM UsersData where email_address = "'+authenticateUser.name+'"', (err, value) => {
+            sdc.timing("timing.get_id.bill_api.check_email", Date.now()-start)
+            if(err){
+                logger.error("bill_GET_ID:Error - in checking email")
+                res.status(400).send(err)
+            }
+            else if(value.length == 0){
+                logger.info("bill_GET_ID:INFO - no email records found")
+                res.status(400).send({
+                    "message" : "No such email-id exists"
+                })
+            }
+            else {
+                if(bcrypt.compare(authenticateUser.pass, value[0].password).then(function(match) {
+                    if(match) {
+                        var params = {
+                            DelaySeconds: 10,
+                            MessageAttributes: {
+                                "User": {
+                                    DataType: "String",
+                                    StringValue: authenticateUser.name
+                                },
+                                "NumberOfDays": {
+                                    DataType: "Number",
+                                    StringValue: `${numberOfDays}`
+                                },
+                                "UserID": {
+                                    DataType: "String",
+                                    StringValue: value[0].id
+                                }
+                            },
+                            MessageBody: "Test",
+                            QueueUrl: process.env.SQS_URL
+                        };
+                        sqs.sendMessage(params, function(err, data) {
+                            if (err) {
+                                return res.status(400).send(err)
+                            } 
+                        });
+                        return res.status(200).send({"message" : "Success"})
+                    }
+                    else {
+                        return res.status(404).send({"message" : "Not found"})
+                    }
+                }));
+            }
+        })
+    }
+}
