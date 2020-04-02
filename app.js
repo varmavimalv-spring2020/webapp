@@ -10,12 +10,6 @@ const fs = require('fs')
 const { Consumer } = require('sqs-consumer');
 var AWS = require('aws-sdk');
 
-app.use(express.json());
-app.use(fileUpload());
-app.use('/v1/users', userRoutes);
-app.use('/v1/bill', userBill);
-app.use('/v1/bill', billFile);
-
 const dir = '/tmp/webapp'
 if(!fs.existsSync(dir)){
     fs.mkdirSync(dir)
@@ -69,5 +63,11 @@ sqsQueueConsumer.on('processing_error', (err) => {
 });
 
 sqsQueueConsumer.start();
+
+app.use(express.json());
+app.use(fileUpload());
+app.use('/v1/users', userRoutes);
+app.use('/v1/bill', userBill);
+app.use('/v1/bill', billFile);
 
 module.exports = app;
