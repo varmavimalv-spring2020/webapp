@@ -1,14 +1,30 @@
 const mysql = require('mysql');
 require('dotenv').config()
-
+const fs = require('fs')
+var connection;
 
 //Setting up mySQL database connection
-const connection = mysql.createConnection({
-    host : process.env.DB_HOST,
-    user : process.env.DB_USER,
-    password : process.env.DB_PASSWORD,
-    port : process.env.DB_PORT
-});
+if(process.env.DB_HOST !== 'localhost'){
+    connection = mysql.createConnection({
+        host : process.env.DB_HOST,
+        user : process.env.DB_USER,
+        password : process.env.DB_PASSWORD,
+        port : process.env.DB_PORT,
+        ssl : {
+            ca: fs
+            .readFileSync("/home/ubuntu/rds-ca-2019-root.pem")
+            .toString()
+        }
+    });
+}
+else{
+    connection = mysql.createConnection({
+        host : process.env.DB_HOST,
+        user : process.env.DB_USER,
+        password : process.env.DB_PASSWORD,
+        port : process.env.DB_PORT
+    });
+}
 
 connection.connect((err) => {
     if(err){
